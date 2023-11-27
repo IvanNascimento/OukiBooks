@@ -1,60 +1,188 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:ouki_books/repositories/favorites_repository.dart';
+import 'package:vocsy_epub_viewer/epub_viewer.dart';
+
+import 'package:ouki_books/repositories/book_repository.dart';
 import 'package:ouki_books/classes/book.dart';
-import 'package:ouki_books/repositories/local_books.dart';
-import 'package:ouki_books/views/reader.dart';
 
 class BookWidget extends StatefulWidget {
   final Book _book;
-  final bool _favorite;
 
-  const BookWidget(this._book, {super.key, bool favorite = false})
-      : _favorite = favorite;
+  const BookWidget(this._book, {super.key});
 
   @override
   State<BookWidget> createState() => _BookWidgetState();
 }
 
 class _BookWidgetState extends State<BookWidget> {
-  bool favorite = false;
+  BookRepository br = BookRepository();
+  FavoriteBooks fb = FavoriteBooks();
+  bool downloading = false;
+  late bool downloaded = false;
+
+  _init() async {
+    downloaded = await br.downloaded(widget._book.id!);
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
 
   @override
   Widget build(BuildContext context) {
-    handleClick() {
-      favorite = !favorite;
-      setState(() {});
-      // chamar função para remover dos favoritos
+    showSnackbar(String texto) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(texto)));
     }
 
-    handleOpen(BuildContext context) {
-      if (LocalBooks.downloaded(widget._book.id!)) {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => ReaderView(widget._book)));
+    handleTagClick() {
+      if (widget._book.favorite) {
+        fb.removeFavorite(widget._book.id!);
       } else {
-        LocalBooks.download(widget._book.downloadUrl!);
+        fb.addFavorite(widget._book.id!);
+      }
+      widget._book.favorite = !widget._book.favorite;
+      setState(() {});
+    }
+
+    handleDownloadClick() async {
+      if (!downloaded && !downloading) {
+        setState(() {
+          downloading = true;
+        });
+        bool status =
+            await br.download(widget._book.downloadUrl, widget._book.id!);
+        if (status) {
+          setState(() {
+            downloading = false;
+            downloaded = true;
+          });
+        } else {
+          showSnackbar("Error no download do Livro");
+          setState(() {
+            downloading = false;
+            downloaded = false;
+          });
+        }
       }
     }
 
-    return InkWell(
-      onTap: handleOpen(context),
+    handleOpen() async {
+      if (downloaded) {
+        VocsyEpub.setConfig(
+          themeColor: Theme.of(context).primaryColor,
+          identifier: "book",
+          scrollDirection: EpubScrollDirection.ALLDIRECTIONS,
+          allowSharing: true,
+          enableTts: true,
+        );
+        VocsyEpub.open(await br.bookpath(widget._book.id!));
+      } else {
+        handleDownloadClick();
+      }
+    }
+
+    handleLongPress() {
+      return showDialog(
+          context: context,
+          builder: (BuildContext bc) {
+            return AlertDialog(
+              title: const Text("Mais Informações"),
+              content: SingleChildScrollView(
+                child: ListBody(children: [
+                  const Text("Título:",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(utf8.decode(widget._book.title.codeUnits)),
+                  const Text("Autor:",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(utf8.decode(widget._book.author.codeUnits))
+                ]),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    handleDownloadClick();
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Baixar Livro"),
+                ),
+                TextButton(
+                    onPressed: () {
+                      handleTagClick();
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Favoritar Livro"))
+              ],
+            );
+          });
+    }
+
+    return GestureDetector(
+      onTap: () {
+        handleOpen();
+      },
+      onLongPress: () {
+        handleLongPress();
+      },
       child: SizedBox(
-        width: 75,
+        width: 100,
         child: Column(children: [
-          Stack(children: [
-            Image.network(widget._book.coverUrl!,
-                headers: {"Access-Control-Allow-Origin": "*"}),
-            Align(
-                alignment: Alignment.topRight,
+          Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Image.network(widget._book.coverUrl),
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: InkWell(
+                      onTap: () {
+                        debugPrint("Favorito");
+                        handleTagClick();
+                      },
+                      child: Icon(
+                        widget._book.favorite
+                            ? Icons.bookmark
+                            : Icons.bookmark_border,
+                        color: Colors.red,
+                        weight: 25,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.bottomRight,
                 child: InkWell(
                   onTap: () {
-                    handleClick();
+                    debugPrint("download");
+                    handleDownloadClick();
                   },
-                  child: Icon(favorite == true
-                      ? Icons.bookmark
-                      : Icons.bookmark_border),
-                ))
-          ]),
-          Text(widget._book.title!),
-          Text(widget._book.author!),
+                  child: Icon(
+                    downloaded
+                        ? Icons.download_done
+                        : downloading
+                            ? Icons.downloading
+                            : Icons.download,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Text(
+            utf8.decode(widget._book.title.codeUnits),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          Text(utf8.decode(widget._book.author.codeUnits),
+              style: const TextStyle(
+                  fontStyle: FontStyle.italic, fontWeight: FontWeight.bold)),
         ]),
       ),
     );

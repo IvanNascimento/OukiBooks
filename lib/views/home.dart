@@ -9,10 +9,30 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
+  bool filterFavorites = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('Ouki Books')),
-        body: const BookCaseView());
+        appBar: AppBar(
+            title: const Text('Ouki Books'),
+            centerTitle: true,
+            backgroundColor: Colors.blue[200],
+            elevation: 5,
+            actions: [
+              IconButton(
+                  tooltip: "Favoritos",
+                  onPressed: () {
+                    filterFavorites = !filterFavorites;
+                    setState(() {});
+                  },
+                  icon: Icon(filterFavorites
+                      ? Icons.bookmark_sharp
+                      : Icons.bookmark_outline_sharp))
+            ]),
+        body: SafeArea(
+            child: BookCaseView(
+          favorites: filterFavorites,
+        )));
   }
 }

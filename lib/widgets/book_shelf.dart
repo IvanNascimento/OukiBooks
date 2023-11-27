@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:ouki_books/repositories/book_repository.dart';
 import 'package:ouki_books/classes/book.dart';
 import 'package:ouki_books/widgets/book.dart';
 
 class BookShelfWidget extends StatefulWidget {
-  const BookShelfWidget({super.key});
+  final List<Book> books;
+  const BookShelfWidget(this.books, {super.key});
 
   @override
   State<BookShelfWidget> createState() => _BookShelfWidgetState();
@@ -11,15 +13,15 @@ class BookShelfWidget extends StatefulWidget {
 
 class _BookShelfWidgetState extends State<BookShelfWidget> {
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      BookWidget(Book(
-          id: 1,
-          author: "Oswald, Felix L.",
-          title: "The Bible of Nature",
-          coverUrl:
-              "https://www.gutenberg.org/cache/epub/72134/pg72134.cover.medium.jpg",
-          downloadUrl: "https://www.gutenberg.org/ebooks/72134.epub3.images")),
-    ]);
+    return Wrap(
+        alignment: WrapAlignment.spaceAround,
+        children: widget.books.map((book) => BookWidget(book)).toList());
   }
 }

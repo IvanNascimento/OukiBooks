@@ -1,6 +1,6 @@
-# ouki_books
+# OukiBooks
 
-A new Flutter project.
+Aplicativo para leitura de livro em formato Epub desenvolvido em contexto de processo seletivo
 
 ## Getting Started
 
