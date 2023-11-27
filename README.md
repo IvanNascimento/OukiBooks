@@ -1,16 +1,20 @@
-# OukiBooks
+# Ouki Books
 
 Aplicativo para leitura de livro em formato Epub desenvolvido em contexto de processo seletivo
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+baixar as dependências com:
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+  dart pub get
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+escolher o dispositivo e rodar a aplicação em modo de debug
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+  flutter devices
+  flutter run <device>
+```
+
+ou baixar e instalar o apk [aqui](https://github.com/IvanNascimento/OukiBooks/releases/tag/Release)
